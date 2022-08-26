@@ -1,0 +1,15 @@
+server:
+  port: 8200
+logging:
+  config: classpath:logback.xml
+  level:
+    root: INFO
+
+cloudflare:
+  zoneId:
+  authEmail:
+  authKey:
+  # CF中需要替换的DNS记录的名称, 修改包含此名称的第一个匹配的记录
+  name:
+  # ip的对应名称(详情 -> CloudFlareTask.java
+  ipName:
