@@ -20,7 +20,7 @@ import java.util.Enumeration;
 @Slf4j
 public class CloudFlareTask implements Runnable {
   public static final String KEY = "Cloudflare";
-  public static final String CRON = "0 0,30,45 * * * ?";
+  public static final String CRON = "0 0,30 * * * ?";
   private static final DnsRecordItem V6_ITEM = new DnsRecordItem();
   public static String NAME;
   public static String IP_NAME;
@@ -49,10 +49,11 @@ public class CloudFlareTask implements Runnable {
         Enumeration<InetAddress> inetAddresses = networkInterfaces.nextElement().getInetAddresses();
         while (inetAddresses.hasMoreElements()) {
           InetAddress inetAddress = inetAddresses.nextElement();
-          if (inetAddress instanceof Inet6Address) {
-            System.out.println("v6: " + inetAddress.getHostAddress() + " ---- name: " + inetAddress.getHostName());
-          } else {
-            System.out.println(inetAddress.getHostAddress() + " ---- name: " + inetAddress.getHostName());
+          if (inetAddress instanceof Inet6Address && inetAddress.getHostName().equals(IP_NAME)) {
+            V6_ITEM.setContent(inetAddress.getHostAddress());
+            DnsRecordItem dnsRecordItem = CloudFlareUtils.updateDnsRecord(V6_ITEM);
+            log.info("【CloudflareTask】修改DNS记录 {} 的IP为 {}, 请求结果: {}", V6_ITEM.getName(), inetAddress.getHostAddress(), dnsRecordItem != null);
+            break;
           }
         }
       }
