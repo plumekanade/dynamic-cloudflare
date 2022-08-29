@@ -45,6 +45,7 @@ public class CloudFlareTask implements Runnable {
     log.info("【CloudflareTask】DNS记录: {}", MapperUtils.serialize(V6_ITEM));
     try {
       Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+      boolean outFlag = false;
       while (networkInterfaces.hasMoreElements()) {
         Enumeration<InetAddress> inetAddresses = networkInterfaces.nextElement().getInetAddresses();
         while (inetAddresses.hasMoreElements()) {
@@ -53,8 +54,12 @@ public class CloudFlareTask implements Runnable {
             V6_ITEM.setContent(inetAddress.getHostAddress());
             DnsRecordItem dnsRecordItem = CloudFlareUtils.updateDnsRecord(V6_ITEM);
             log.info("【CloudflareTask】修改DNS记录 {} 的IP为 {}, 请求结果: {}", V6_ITEM.getName(), inetAddress.getHostAddress(), dnsRecordItem != null);
+            outFlag = true;
             break;
           }
+        }
+        if (outFlag) {
+          break;
         }
       }
     } catch (Exception e) {
