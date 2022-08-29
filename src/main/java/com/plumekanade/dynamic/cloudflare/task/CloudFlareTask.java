@@ -20,7 +20,7 @@ import java.util.Enumeration;
 @Slf4j
 public class CloudFlareTask implements Runnable {
   public static final String KEY = "Cloudflare";
-  public static final String CRON = "0 0,30 * * * ?";
+  public static final String CRON = "0 0,15,30,45 * * * ?";
   private static final DnsRecordItem V6_ITEM = new DnsRecordItem();
   public static String NAME;
   public static String IP_NAME;
@@ -35,14 +35,14 @@ public class CloudFlareTask implements Runnable {
       for (DnsRecordItem dnsRecordItem : dnsRecordPage.getResult()) {
         if (dnsRecordItem.getName().contains(NAME)) {
           V6_ITEM.setId(dnsRecordItem.getId());
-          V6_ITEM.setName(dnsRecordItem.getName());
-          V6_ITEM.setContent(dnsRecordItem.getContent());
           V6_ITEM.setTtl(dnsRecordItem.getTtl());
+          V6_ITEM.setName(dnsRecordItem.getName());
+          V6_ITEM.setType(dnsRecordItem.getType());
+          V6_ITEM.setContent(dnsRecordItem.getContent());
           break;
         }
       }
     }
-    log.info("【CloudflareTask】DNS记录: {}", MapperUtils.serialize(V6_ITEM));
     try {
       Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
       boolean outFlag = false;
@@ -51,9 +51,15 @@ public class CloudFlareTask implements Runnable {
         while (inetAddresses.hasMoreElements()) {
           InetAddress inetAddress = inetAddresses.nextElement();
           if (inetAddress instanceof Inet6Address && inetAddress.getHostName().equals(IP_NAME)) {
-            V6_ITEM.setContent(inetAddress.getHostAddress());
-            DnsRecordItem dnsRecordItem = CloudFlareUtils.updateDnsRecord(V6_ITEM);
-            log.info("【CloudflareTask】修改DNS记录 {} 的IP为 {}, 请求结果: {}", V6_ITEM.getName(), inetAddress.getHostAddress(), dnsRecordItem != null);
+            if (V6_ITEM.getContent().equals(inetAddress.getHostAddress())) {
+              log.info("【CloudflareTask】与DNS记录的IP一致, 无需修改...");
+            } else {
+              V6_ITEM.setContent(inetAddress.getHostAddress());
+              V6_ITEM.setProxied(true);
+              DnsRecordItem dnsRecordItem = CloudFlareUtils.updateDnsRecord(V6_ITEM);
+              log.info("【CloudflareTask】请求返回内容: {}", MapperUtils.serialize(dnsRecordItem));
+              log.info("【CloudflareTask】修改DNS记录 {} 的IP为 {}, 请求结果: {}", V6_ITEM.getName(), inetAddress.getHostAddress(), dnsRecordItem != null);
+            }
             outFlag = true;
             break;
           }
