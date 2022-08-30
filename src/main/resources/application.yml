@@ -13,3 +13,10 @@ cloudflare:
   name:
   # ip的对应名称(详情 -> CloudFlareTask.java
   ipName:
+
+tencent:
+  appId:
+  secretId:
+  secretKey:
+  domainId:
+  recordIds:
